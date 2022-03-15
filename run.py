@@ -1,10 +1,11 @@
 import calendar
 import datetime
+import json
+import pytz
 import random
 import re
 import requests
 import time
-import pytz
 
 
 DAY_NUMBER = {
@@ -20,14 +21,14 @@ offerings = [
         "end": "1:00pm",
         "max": 20,
     },
-    {
-        "offering_guid": "3a9eec849bf149a7a4e4dcc6029dccc2",
-        "instructor": "Alicia",
-        "day": "Tuesday",
-        "start": "5:45pm",
-        "end": "6:55pm",
-        "max": 20,
-    },
+    # {
+    #     "offering_guid": "3a9eec849bf149a7a4e4dcc6029dccc2",
+    #     "instructor": "Alicia",
+    #     "day": "Tuesday",
+    #     "start": "5:45pm",
+    #     "end": "6:55pm",
+    #     "max": 20,
+    # },
     {
         "offering_guid": "7219cf17a8c240e6a0f55a91f1a2961f",
         "instructor": "Bryant",
@@ -92,7 +93,8 @@ def request_offering_data(offering):
 
     weekday = DAY_NUMBER[offering['day']]
     today = datetime.datetime.now(pytz.timezone('US/Pacific'))
-    next_offering_date = today + datetime.timedelta(days=((today.weekday() + weekday) % 7))
+    days_until_next = (weekday - today.weekday()) % 7
+    next_offering_date = today + datetime.timedelta(days=days_until_next)
 
     data = {
         'PreventChromeAutocomplete': '',
@@ -128,14 +130,20 @@ def request_offering_data(offering):
     else:
         return offering['max']
 
+
+# load current values from file
+with open('current_values.json') as f:
+    current_values = json.load(f)
+
 for offering in offerings:
     try:
         spots_remaining = request_offering_data(offering)
-        # write results to file with timestamp
-        with open('results.csv', 'a') as f:
-            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            f.write("{},{},{},{}\n".format(timestamp, offering['offering_guid'], offering['instructor'], spots_remaining))
-        print()
+        if spots_remaining != current_values.get(offering['offering_guid']):
+            current_values[offering['offering_guid']] = spots_remaining
+            # write results to file with timestamp
+            with open('results.csv', 'a') as f:
+                timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                f.write("{},{},{},{}\n".format(timestamp, offering['offering_guid'], offering['instructor'], spots_remaining))
     except Exception as e:
         # write error to file with timestamp
         with open('errors.csv', 'a') as f:
@@ -146,3 +154,7 @@ for offering in offerings:
     sleeptime = random.randint(1, 5)
     time.sleep(sleeptime)
     print("Sleeping for {} seconds".format(sleeptime))
+
+# save current_values to json file
+with open('current_values.json', 'w') as f:
+    json.dump(current_values, f)
