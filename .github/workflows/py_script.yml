@@ -2,7 +2,7 @@ name: py
 
 on:
   schedule:
-    - cron: "*/15 6-23 * * 1-4" # At every 15th minute past every hour from 6 through 23 on every day-of-week from Sunday through Thursday.
+    - cron: "*/30 * * * 1-5" # Every 30 minutes Monday-Friday UTC
   workflow_dispatch:
 
 jobs:

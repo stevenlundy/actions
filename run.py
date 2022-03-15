@@ -4,6 +4,8 @@ import random
 import re
 import requests
 import time
+import pytz
+
 
 DAY_NUMBER = {
     name: num for num, name in enumerate(calendar.day_name)
@@ -79,6 +81,9 @@ def request_offering_data(offering):
 
     headers = {
         'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'Origin': 'https://app.rockgympro.com',
+        'Referer': 'https://app.rockgympro.com/',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36',
     }
 
     params = (
@@ -86,7 +91,7 @@ def request_offering_data(offering):
     )
 
     weekday = DAY_NUMBER[offering['day']]
-    today = datetime.date.today()
+    today = datetime.datetime.now(pytz.timezone('US/Pacific'))
     next_offering_date = today + datetime.timedelta(days=((today.weekday() + weekday) % 7))
 
     data = {
