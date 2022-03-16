@@ -7,6 +7,7 @@ import re
 import requests
 import time
 
+local_timezone = pytz.timezone('US/Pacific')
 
 DAY_NUMBER = {
     name: num for num, name in enumerate(calendar.day_name)
@@ -17,59 +18,79 @@ offerings = [
         "offering_guid": "d3ab9dedb9d444f2af5c6848d5cd5bd3",
         "instructor": "Julie",
         "day": "Tuesday",
-        "start": "12:00pm",
-        "end": "1:00pm",
+        "start": "12:00",
+        "end": "13:00",
         "max": 20,
     },
-    # {
-    #     "offering_guid": "3a9eec849bf149a7a4e4dcc6029dccc2",
-    #     "instructor": "Alicia",
-    #     "day": "Tuesday",
-    #     "start": "5:45pm",
-    #     "end": "6:55pm",
-    #     "max": 20,
-    # },
+    {
+        "offering_guid": "3a9eec849bf149a7a4e4dcc6029dccc2",
+        "instructor": "Alicia",
+        "day": "Tuesday",
+        "start": "17:45",
+        "end": "18:55",
+        "max": 20,
+    },
     {
         "offering_guid": "7219cf17a8c240e6a0f55a91f1a2961f",
         "instructor": "Bryant",
         "day": "Tuesday",
-        "start": "7:30pm",
-        "end": "8:40pm",
+        "start": "19:30",
+        "end": "20:40",
         "max": 25,
     },
     {
         "offering_guid": "7ca73904c3d9495bac3a94aa15f8c6df",
         "instructor": "Britany",
         "day": "Wednesday",
-        "start": "7:15pm",
-        "end": "8:25pm",
+        "start": "19:15",
+        "end": "20:25",
         "max": 20,
     },
     {
         "offering_guid": "bdd150c8804a4849b8cf9c8e0c28f785",
         "instructor": "Julie",
         "day": "Thursday",
-        "start": "5:45pm",
-        "end": "6:55pm",
+        "start": "17:45",
+        "end": "18:55",
         "max": 18,
     },
     {
         "offering_guid": "9fe1cf2b9bd94d5db616ed53459cca8e",
         "instructor": "Laura",
         "day": "Wednesday",
-        "start": "5:45pm",
-        "end": "6:55pm",
+        "start": "17:45",
+        "end": "18:55",
         "max": 18,
     },
     {
         "offering_guid": "07c0e269b1824adf90e259b7cc9b6859",
         "instructor": "Aly",
         "day": "Thursday",
-        "start": "7:15pm",
-        "end": "8:45pm",
+        "start": "19:15",
+        "end": "20:45",
         "max": 21,
     }
 ]
+
+def get_next_offering_time(offering):
+    """
+    Returns the next time the given offering is scheduled to start.
+    """
+    weekday = DAY_NUMBER[offering['day']]
+    today = datetime.datetime.now(local_timezone)
+    days_until_next = (weekday - today.weekday()) % 7
+    next_offering_date = today + datetime.timedelta(days=days_until_next)
+
+    next_offering_date = next_offering_date.replace(
+        hour=int(offering['start'].split(':')[0]),
+        minute=int(offering['start'].split(':')[1]),
+        second=0,
+        microsecond=0
+    )
+
+    if next_offering_date < today:
+        next_offering_date += datetime.timedelta(days=7)
+    return next_offering_date
 
 def request_offering_data(offering):
     cookies = {
@@ -91,17 +112,12 @@ def request_offering_data(offering):
         ('a', 'equery'),
     )
 
-    weekday = DAY_NUMBER[offering['day']]
-    today = datetime.datetime.now(pytz.timezone('US/Pacific'))
-    days_until_next = (weekday - today.weekday()) % 7
-    next_offering_date = today + datetime.timedelta(days=days_until_next)
-
     data = {
         'PreventChromeAutocomplete': '',
         'fctrl_1': 'offering_guid',
         'offering_guid': offering["offering_guid"],
         'fctrl_4': 'show_date',
-        'show_date': next_offering_date.strftime("%Y-%m-%d"),
+        'show_date': get_next_offering_time(offering).strftime("%Y-%m-%d"),
         'ftagname_0_pcount-pid-1-3353458': 'pcount',
         'ftagval_0_pcount-pid-1-3353458': '1',
         'ftagname_1_pcount-pid-1-3353458': 'pid',
@@ -136,6 +152,10 @@ with open('current_values.json') as f:
     current_values = json.load(f)
 
 for offering in offerings:
+    if get_next_offering_time(offering) > datetime.datetime.now(local_timezone) + datetime.timedelta(days=1):
+        print("Skipping {}'s class because it is more than 24 hours away".format(offering["instructor"]))
+        continue
+
     try:
         spots_remaining = request_offering_data(offering)
         if spots_remaining != current_values.get(offering['offering_guid']):
