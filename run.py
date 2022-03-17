@@ -162,12 +162,12 @@ for offering in offerings:
             current_values[offering['offering_guid']] = spots_remaining
             # write results to file with timestamp
             with open('results.csv', 'a') as f:
-                timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                timestamp = datetime.datetime.now(local_timezone).strftime("%Y-%m-%d %H:%M:%S")
                 f.write("{},{},{},{}\n".format(timestamp, offering['offering_guid'], offering['instructor'], spots_remaining))
     except Exception as e:
         # write error to file with timestamp
         with open('errors.csv', 'a') as f:
-            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            timestamp = datetime.datetime.now(local_timezone).strftime("%Y-%m-%d %H:%M:%S")
             f.write("{},{},{},{}\n".format(timestamp, offering['offering_guid'], offering['instructor'], str(e)))
 
     # sleep for a random amount of time between 1 and 5 seconds
