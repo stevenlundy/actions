@@ -152,7 +152,7 @@ with open('current_values.json') as f:
     current_values = json.load(f)
 
 for offering in offerings:
-    if get_next_offering_time(offering) > datetime.datetime.now(local_timezone) + datetime.timedelta(days=1):
+    if get_next_offering_time(offering) > datetime.datetime.now(local_timezone) + datetime.timedelta(days=1, minutes=30):
         print("Skipping {}'s class because it is more than 24 hours away".format(offering["instructor"]))
         continue
 
