@@ -152,7 +152,8 @@ with open('current_values.json') as f:
     current_values = json.load(f)
 
 for offering in offerings:
-    if get_next_offering_time(offering) > datetime.datetime.now(local_timezone) + datetime.timedelta(days=1, minutes=30):
+    next_offering = get_next_offering_time(offering)
+    if next_offering > datetime.datetime.now(local_timezone) + datetime.timedelta(days=1, minutes=30):
         print("Skipping {}'s class because it is more than 24 hours away".format(offering["instructor"]))
         continue
 
@@ -162,8 +163,9 @@ for offering in offerings:
             current_values[offering['offering_guid']] = spots_remaining
             # write results to file with timestamp
             with open('results.csv', 'a') as f:
+                next_timestamp = get_next_offering_time(offering).strftime("%Y-%m-%d %H:%M:%S")
                 timestamp = datetime.datetime.now(local_timezone).strftime("%Y-%m-%d %H:%M:%S")
-                f.write("{},{},{},{}\n".format(timestamp, offering['offering_guid'], offering['instructor'], spots_remaining))
+                f.write("{},{},{},{},{}\n".format(timestamp, next_timestamp, offering['offering_guid'], offering['instructor'], spots_remaining))
     except Exception as e:
         # write error to file with timestamp
         with open('errors.csv', 'a') as f:
