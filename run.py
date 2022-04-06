@@ -39,6 +39,14 @@ offerings = [
         "max": 25,
     },
     {
+        "offering_guid": "851a0a2125ef4b15b1fddd8b3b6720bf",
+        "instructor": "Sarah",
+        "day": "Wednesday",
+        "start": "7:00",
+        "end": "8:00",
+        "max": 20,
+    },
+    {
         "offering_guid": "7ca73904c3d9495bac3a94aa15f8c6df",
         "instructor": "Britany",
         "day": "Wednesday",
